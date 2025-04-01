@@ -7,6 +7,7 @@ module Task3 where
 import Task1 (Parse (parse))
 import Task2 (Eval (evalBinOp), Expr (..), evalExpr)
 import Data.Foldable (foldl')
+import Data.List (nub)
 
 -- | Solves SAT problem for given boolean formula written in Reverse Polish Notation
 --
@@ -77,7 +78,7 @@ constructList (x:xs) = map (\s -> (x, True) : s) (constructList xs) ++  map (\s 
 findAllVars :: Expr Bool BoolOp -> [String]
 findAllVars (Lit _) = []
 findAllVars (Var x) = [x]
-findAllVars (BinOp _ x y) = findAllVars x ++ findAllVars y
+findAllVars (BinOp _ x y) = nub (findAllVars x ++ findAllVars y)
 
 
 combine:: Maybe Bool -> Maybe Bool -> Maybe Bool
