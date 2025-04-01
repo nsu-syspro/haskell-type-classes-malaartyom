@@ -2,6 +2,8 @@
 -- The above pragma enables all warnings
 
 module Task1 where
+import Data.Char (isDigit)
+
 
 -- * Expression data type
 
@@ -28,8 +30,9 @@ data IExpr =
 -- 9
 --
 evalIExpr :: IExpr -> Integer
-evalIExpr = error "TODO: define evalIExpr"
-
+evalIExpr (Lit a) = a
+evalIExpr (Add x y) = evalIExpr x + evalIExpr y
+evalIExpr (Mul x y) = evalIExpr x * evalIExpr y
 -- * Parsing
 
 -- | Class of parseable types
@@ -55,7 +58,8 @@ class Parse a where
 -- Nothing
 --
 instance Parse IExpr where
-  parse = error "TODO: define parse (Parse IExpr)"
+  parse x = parseSplited (map toToken (words x)) []
+
 
 -- * Evaluation with parsing
 
@@ -77,4 +81,37 @@ instance Parse IExpr where
 -- Nothing
 --
 evaluateIExpr :: String -> Maybe Integer
-evaluateIExpr = error "TODO: define evaluateIExpr"
+evaluateIExpr s = case parse s of
+                    Nothing -> Nothing
+                    Just x  -> Just (evalIExpr x)
+
+
+data Token = Num Integer | AddOp | MulOp
+  deriving Show
+
+
+
+toToken:: String -> Maybe Token
+toToken "+" = Just AddOp
+toToken "*" = Just MulOp
+toToken  x  = if all isDigit x then Just (Num (read x)) else Nothing
+
+
+parseSplited :: [Maybe Token] -> [IExpr] -> Maybe IExpr
+parseSplited [] [] = Nothing
+parseSplited (x:xs) stack@(y:z:ys) = case x of
+                                  Nothing -> Nothing
+                                  Just AddOp -> parseSplited xs (Add y z : ys)
+                                  Just MulOp -> parseSplited xs (Mul y z : ys)
+                                  Just (Num n) -> parseSplited xs (Lit n : stack)
+parseSplited [] [x]  = Just x
+parseSplited [] _    = Nothing
+parseSplited (x:xs) y = parseNum x xs y
+
+
+
+parseNum :: Maybe Token -> [Maybe Token] -> [IExpr] -> Maybe IExpr
+parseNum (Just (Num x)) xs y = parseSplited xs (Lit x:y)
+parseNum (Just _) _ _ = Nothing
+parseNum Nothing _ _= Nothing
+
