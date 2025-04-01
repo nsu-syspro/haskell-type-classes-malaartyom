@@ -33,7 +33,9 @@ import Data.List (nub)
 -- Nothing
 --
 solveSAT :: String -> Maybe Bool
-solveSAT = solve 
+solveSAT x = case (parse x :: Maybe (Expr Bool BoolOp)) of 
+            (Just expr) -> foldl' combine (Just False) (map (`evaluteBool` x) (constructList (findAllVars expr)))
+            Nothing     -> Nothing
 
 
 data BoolOp = And | Or | Xor
@@ -64,16 +66,9 @@ evaluteBool list s = case parse s :: Maybe (Expr Bool BoolOp) of
                       Nothing -> Nothing
                       Just x  -> evalExpr list x
 
-solve :: String -> Maybe Bool
-solve x = case (parse x :: Maybe (Expr Bool BoolOp)) of 
-            (Just expr) -> foldl' combine (Just False) (map (`evaluteBool` x) (constructList (findAllVars expr)))
-            Nothing     -> Nothing
-
-
 constructList :: [String] -> [[(String, Bool)]]
 constructList []     = [[]]
 constructList (x:xs) = map (\s -> (x, True) : s) (constructList xs) ++  map (\s -> (x, False) : s) (constructList xs)
-
 
 findAllVars :: Expr Bool BoolOp -> [String]
 findAllVars (Lit _) = []
