@@ -58,7 +58,7 @@ class Parse a where
 -- Nothing
 --
 instance Parse IExpr where
-  parse x = parseSplited (map toToken (words x)) []
+  parse x = parseSplitted (map toToken (words x)) []
 
 
 -- * Evaluation with parsing
@@ -97,21 +97,21 @@ toToken "*" = Just MulOp
 toToken  x  = if all isDigit x then Just (Num (read x)) else Nothing
 
 
-parseSplited :: [Maybe Token] -> [IExpr] -> Maybe IExpr
-parseSplited [] [] = Nothing
-parseSplited (x:xs) stack@(y:z:ys) = case x of
+parseSplitted :: [Maybe Token] -> [IExpr] -> Maybe IExpr
+parseSplitted [] [] = Nothing
+parseSplitted (x:xs) stack@(y:z:ys) = case x of
                                   Nothing -> Nothing
-                                  Just AddOp -> parseSplited xs (Add y z : ys)
-                                  Just MulOp -> parseSplited xs (Mul y z : ys)
-                                  Just (Num n) -> parseSplited xs (Lit n : stack)
-parseSplited [] [x]  = Just x
-parseSplited [] _    = Nothing
-parseSplited (x:xs) y = parseNum x xs y
+                                  Just AddOp -> parseSplitted xs (Add y z : ys)
+                                  Just MulOp -> parseSplitted xs (Mul y z : ys)
+                                  Just (Num n) -> parseSplitted xs (Lit n : stack)
+parseSplitted [] [x]  = Just x
+parseSplitted [] _    = Nothing
+parseSplitted (x:xs) y = parseNum x xs y
 
 
 
 parseNum :: Maybe Token -> [Maybe Token] -> [IExpr] -> Maybe IExpr
-parseNum (Just (Num x)) xs y = parseSplited xs (Lit x:y)
+parseNum (Just (Num x)) xs y = parseSplitted xs (Lit x:y)
 parseNum (Just _) _ _ = Nothing
 parseNum Nothing _ _= Nothing
 

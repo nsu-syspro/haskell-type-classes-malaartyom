@@ -101,14 +101,14 @@ instance Eval Integer IntOp where
 --
 evalExpr :: (Eval a op) => [(String, a)] -> Expr a op -> Maybe a
 evalExpr _ (Lit x) = Just x
-evalExpr list (Var x) = findInList list x
+evalExpr list (Var x) = lookup x list
 evalExpr list (BinOp op x y) = case (evalExpr list x, evalExpr list y) of
                                   (Just a, Just b) -> Just (evalBinOp op a b)
                                   (_, _)           -> Nothing 
 
-findInList :: [(String, a)] -> String -> Maybe a
-findInList [] _ = Nothing
-findInList (x:xs) e = if fst x == e then Just (snd x) else findInList xs e
+-- findInList :: [(String, a)] -> String -> Maybe a
+-- findInList [] _ = Nothing
+-- findInList (x:xs) e = if fst x == e then Just (snd x) else findInList xs e
 
 -- | Parses given integer expression in Reverse Polish Notation and evaluates it
 -- using given association list of variable values
