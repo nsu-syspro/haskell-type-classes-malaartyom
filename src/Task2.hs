@@ -2,10 +2,12 @@
 -- The above pragma enables all warnings
 
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Task2 where
 
 import Task1 (Parse, Parse(..))
+import Data.Char (isDigit)
 
 -- * Expression data type
 
@@ -42,14 +44,47 @@ data IntOp = Add | Mul | Sub
 -- Nothing
 --
 instance (Parse a, Parse op) => Parse (Expr a op) where
-  parse = error "TODO: define parse (Parse (Expr a op))"
+  parse x = parseTokens (words x) []
 
+parseTokens :: (Parse a, Parse op) => [String] -> [Expr a op] -> Maybe (Expr a op)
+parseTokens [] [] = Nothing
+parseTokens (x:xs) stack@(y:z:ys) =
+                          case parse x of
+                            Just lit -> parseTokens xs (Lit lit:stack)
+                            Nothing -> case parse x of
+                                        Just op -> parseTokens xs (BinOp op z y:ys)
+                                        Nothing -> parseTokens xs (Var x:stack)
+parseTokens [] [x] = Just x
+parseTokens [] _ = Nothing
+parseTokens (x:xs) stack =
+                        case parse x of
+                          Just lit -> parseTokens xs (Lit lit:stack)
+                          Nothing -> parseTokens xs (Var x:stack)
+
+
+instance Parse Integer where
+  parse x = if all isDigit x then Just (read x) else Nothing
+
+
+instance Parse IntOp where
+  parse "+" = Just Add
+  parse "-" = Just Sub
+  parse "*" = Just Mul
+  parse _   = Nothing
 -- * Evaluation
 
 -- | Class of evaluatable types
 class Eval a op where
   -- | Evaluates given binary operation with provided arguments
   evalBinOp :: op -> a -> a -> a
+
+
+instance Eval Integer IntOp where
+  evalBinOp Mul = (*)
+  evalBinOp Sub = (-)
+  evalBinOp Add = (+)
+
+
 
 -- | Evaluates given 'Expr' using given association list of variable values
 --
@@ -65,7 +100,15 @@ class Eval a op where
 -- Nothing
 --
 evalExpr :: (Eval a op) => [(String, a)] -> Expr a op -> Maybe a
-evalExpr = error "TODO: define evalExpr"
+evalExpr _ (Lit x) = Just x
+evalExpr list (Var x) = lookup x list
+evalExpr list (BinOp op x y) = case (evalExpr list x, evalExpr list y) of
+                                  (Just a, Just b) -> Just (evalBinOp op a b)
+                                  (_, _)           -> Nothing 
+
+-- findInList :: [(String, a)] -> String -> Maybe a
+-- findInList [] _ = Nothing
+-- findInList (x:xs) e = if fst x == e then Just (snd x) else findInList xs e
 
 -- | Parses given integer expression in Reverse Polish Notation and evaluates it
 -- using given association list of variable values
@@ -89,7 +132,9 @@ evalExpr = error "TODO: define evalExpr"
 -- Nothing
 --
 evaluateInteger :: [(String, Integer)] -> String -> Maybe Integer
-evaluateInteger = error "TODO: define evaluateInteger"
+evaluateInteger list s  = case parse s :: Maybe (Expr Integer IntOp)  of 
+                            Nothing -> Nothing
+                            Just x  -> evalExpr list x  
 
 -- | Parses given expression in Reverse Polish Notation and evaluates it
 -- using given association list of variable values
